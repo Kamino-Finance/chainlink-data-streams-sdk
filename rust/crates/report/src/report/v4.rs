@@ -12,6 +12,7 @@ use num_bigint::BigInt;
 /// - `native_fee`: Base cost to validate a transaction using the report, denominated in the chain’s native token (e.g., WETH/ETH).
 /// - `link_fee`: Base cost to validate a transaction using the report, denominated in LINK.
 /// - `expires_at`: Latest timestamp where the report can be verified onchain.
+/// - `last_update_timestamp`: Timestamp of the last valid price update
 /// - `price`: DON consensus median benchmark price (8 or 18 decimals).
 /// - `market_status`: The DON's consensus on whether the market is currently open. Possible values: `0` (`Unknown`), `1` (`Closed`), `2` (`Open`).
 ///
@@ -24,6 +25,7 @@ use num_bigint::BigInt;
 ///     uint192 nativeFee;
 ///     uint192 linkFee;
 ///     uint32 expiresAt;
+///     uint64 lastUpdateTimestamp;
 ///     int192 price;
 ///     uint32 marketStatus;
 /// }
@@ -36,6 +38,7 @@ pub struct ReportDataV4 {
     pub native_fee: BigInt,
     pub link_fee: BigInt,
     pub expires_at: u32,
+    pub last_update_timestamp: u64,
     pub price: BigInt,
     pub market_status: u32,
 }
@@ -55,7 +58,7 @@ impl ReportDataV4 {
     ///
     /// Returns a `ReportError` if the data is too short or if the data is invalid.
     pub fn decode(data: &[u8]) -> Result<Self, ReportError> {
-        if data.len() < 8 * ReportBase::WORD_SIZE {
+        if data.len() < 9 * ReportBase::WORD_SIZE {
             return Err(ReportError::DataTooShort("ReportDataV4"));
         }
 
@@ -67,8 +70,9 @@ impl ReportDataV4 {
         let native_fee = ReportBase::read_uint192(data, 3 * ReportBase::WORD_SIZE)?;
         let link_fee = ReportBase::read_uint192(data, 4 * ReportBase::WORD_SIZE)?;
         let expires_at = ReportBase::read_uint32(data, 5 * ReportBase::WORD_SIZE)?;
-        let price = ReportBase::read_int192(data, 6 * ReportBase::WORD_SIZE)?;
-        let market_status = ReportBase::read_uint32(data, 7 * ReportBase::WORD_SIZE)?;
+        let last_update_timestamp = ReportBase::read_uint64(data, 6 * ReportBase::WORD_SIZE)?;
+        let price = ReportBase::read_int192(data, 7 * ReportBase::WORD_SIZE)?;
+        let market_status = ReportBase::read_uint32(data, 8 * ReportBase::WORD_SIZE)?;
 
         Ok(Self {
             feed_id,
@@ -77,6 +81,7 @@ impl ReportDataV4 {
             native_fee,
             link_fee,
             expires_at,
+            last_update_timestamp,
             price,
             market_status,
         })
@@ -100,6 +105,7 @@ impl ReportDataV4 {
         buffer.extend_from_slice(&ReportBase::encode_uint192(&self.native_fee)?);
         buffer.extend_from_slice(&ReportBase::encode_uint192(&self.link_fee)?);
         buffer.extend_from_slice(&ReportBase::encode_uint32(self.expires_at)?);
+        buffer.extend_from_slice(&ReportBase::encode_uint64(self.last_update_timestamp)?);
         buffer.extend_from_slice(&ReportBase::encode_int192(&self.price)?);
         buffer.extend_from_slice(&ReportBase::encode_uint32(self.market_status)?);
 
@@ -135,6 +141,7 @@ mod tests {
         assert_eq!(decoded.native_fee, expected_fee);
         assert_eq!(decoded.link_fee, expected_fee);
         assert_eq!(decoded.expires_at, expected_timestamp + 100);
+        assert_eq!(decoded.last_update_timestamp, u64::from(expected_timestamp));
         assert_eq!(decoded.price, expected_price);
         assert_eq!(decoded.market_status, expected_market_stats);
     }
