@@ -25,7 +25,7 @@ use num_bigint::BigInt;
 ///     uint192 nativeFee;
 ///     uint192 linkFee;
 ///     uint32 expiresAt;
-///     uint32 lastUpdateTimestamp;
+///     uint64 lastUpdateTimestamp;
 ///     int192 price;
 ///     uint32 marketStatus;
 /// }
@@ -38,7 +38,7 @@ pub struct ReportDataV4 {
     pub native_fee: BigInt,
     pub link_fee: BigInt,
     pub expires_at: u32,
-    pub last_update_timestamp: u32,
+    pub last_update_timestamp: u64,
     pub price: BigInt,
     pub market_status: u32,
 }
@@ -70,7 +70,7 @@ impl ReportDataV4 {
         let native_fee = ReportBase::read_uint192(data, 3 * ReportBase::WORD_SIZE)?;
         let link_fee = ReportBase::read_uint192(data, 4 * ReportBase::WORD_SIZE)?;
         let expires_at = ReportBase::read_uint32(data, 5 * ReportBase::WORD_SIZE)?;
-        let last_update_timestamp = ReportBase::read_uint32(data, 6 * ReportBase::WORD_SIZE)?;
+        let last_update_timestamp = ReportBase::read_uint64(data, 6 * ReportBase::WORD_SIZE)?;
         let price = ReportBase::read_int192(data, 7 * ReportBase::WORD_SIZE)?;
         let market_status = ReportBase::read_uint32(data, 8 * ReportBase::WORD_SIZE)?;
 
@@ -105,7 +105,7 @@ impl ReportDataV4 {
         buffer.extend_from_slice(&ReportBase::encode_uint192(&self.native_fee)?);
         buffer.extend_from_slice(&ReportBase::encode_uint192(&self.link_fee)?);
         buffer.extend_from_slice(&ReportBase::encode_uint32(self.expires_at)?);
-        buffer.extend_from_slice(&ReportBase::encode_uint32(self.last_update_timestamp)?);
+        buffer.extend_from_slice(&ReportBase::encode_uint64(self.last_update_timestamp)?);
         buffer.extend_from_slice(&ReportBase::encode_int192(&self.price)?);
         buffer.extend_from_slice(&ReportBase::encode_uint32(self.market_status)?);
 
@@ -141,7 +141,7 @@ mod tests {
         assert_eq!(decoded.native_fee, expected_fee);
         assert_eq!(decoded.link_fee, expected_fee);
         assert_eq!(decoded.expires_at, expected_timestamp + 100);
-        assert_eq!(decoded.last_update_timestamp, expected_timestamp);
+        assert_eq!(decoded.last_update_timestamp, u64::from(expected_timestamp));
         assert_eq!(decoded.price, expected_price);
         assert_eq!(decoded.market_status, expected_market_stats);
     }

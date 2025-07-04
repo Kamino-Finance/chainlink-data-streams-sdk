@@ -202,7 +202,7 @@ mod tests {
             native_fee: BigInt::from(MOCK_FEE),
             link_fee: BigInt::from(MOCK_FEE),
             expires_at: MOCK_TIMESTAMP + 100,
-            last_update_timestamp: MOCK_TIMESTAMP,
+            last_update_timestamp: u64::from(MOCK_TIMESTAMP),
             price: BigInt::from(MOCK_PRICE),
             market_status: MARKET_STATUS_OPEN,
         };
